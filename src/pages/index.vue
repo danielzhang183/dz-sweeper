@@ -22,14 +22,25 @@ const state = reactive(
 function generateMines(initial: BlockState) {
   for (const row of state) {
     for (const block of row) {
-      if (Math.abs(initial.x - block.x) < 1)
+      if (Math.abs(initial.x - block.x) <= 1)
         continue
-      if (Math.abs(initial.y - block.y) < 1)
+      if (Math.abs(initial.y - block.y) <= 1)
         continue
       block.mine = Math.random() < 0.2
     }
   }
   updateNumbers()
+}
+
+function expandZero(block: BlockState) {
+  if (block.adjacentMines)
+    return
+  getSiblings(block).forEach((s) => {
+    if (!s.revealed) {
+      s.revealed = true
+      expandZero(s)
+    }
+  })
 }
 
 const directions = [
@@ -60,18 +71,24 @@ function updateNumbers() {
     row.forEach((block, x) => {
       if (block.mine)
         return
-      directions.forEach(([dx, dy]) => {
-        const x2 = x + dx
-        const y2 = y + dy
-        if (x2 < 0 || x2 >= WIDTH || y2 < 0 || y2 >= HEIGHT)
-          return
-        if (state[y2][x2].mine)
+      getSiblings(block).forEach((b) => {
+        if (b.mine)
           block.adjacentMines += 1
       })
     })
   })
 }
 
+function getSiblings(block: BlockState) {
+  return directions.map(([dx, dy]) => {
+    const x2 = block.x + dx
+    const y2 = block.y + dy
+    if (x2 < 0 || x2 >= WIDTH || y2 < 0 || y2 >= HEIGHT)
+      return undefined
+    return state[y2][x2]
+  })
+    .filter(Boolean) as BlockState[]
+}
 let mineGenerated = false
 const dev = true
 
@@ -83,6 +100,7 @@ function onClick(block: BlockState) {
   block.revealed = true
   if (block.mine)
     alert('BOOm')
+  expandZero(block)
 }
 
 function getBlockClass(block: BlockState) {
