@@ -92,7 +92,15 @@ function getSiblings(block: BlockState) {
 let mineGenerated = false
 const dev = true
 
-function onClick(block: BlockState) {
+function onRightClick(block: BlockState) {
+  if (block.revealed)
+    return
+  block.flagged = !block.flagged
+}
+
+function onClick(e: MouseEvent, block: BlockState) {
+  e.preventDefault()
+
   if (!mineGenerated) {
     generateMines(block)
     mineGenerated = true
@@ -130,9 +138,13 @@ function getBlockClass(block: BlockState) {
           hover="bg-gray/10"
           border="1 gray-400/10"
           :class="getBlockClass(block)"
-          @click="onClick(block)"
+          @click="onClick($event, block)"
+          @contextmenu.prevent="onRightClick(block)"
         >
-          <template v-if="block.revealed || dev">
+          <template v-if="block.flagged">
+            <div i-mdi:flag text-red />
+          </template>
+          <template v-else-if="block.revealed || dev">
             <div v-if="block.mine" i-mdi:mine />
             <div v-else>
               {{ block.adjacentMines }}
