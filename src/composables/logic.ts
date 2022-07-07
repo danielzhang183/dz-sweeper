@@ -14,6 +14,7 @@ const directions = [
 export class GamePlay {
   state = ref<BlockState[][]>([])
   mineGenerated = false
+  gameState = ref<'play' | 'won' | 'lost'>('play')
 
   constructor(
     public width: number,
@@ -23,6 +24,7 @@ export class GamePlay {
   }
 
   reset() {
+    this.gameState.value = 'play'
     this.mineGenerated = false
     this.state.value = Array.from({ length: this.height }, (_, y) =>
       Array.from({ length: this.width },
@@ -81,6 +83,8 @@ export class GamePlay {
   }
 
   onRightClick(block: BlockState) {
+    if (this.gameState.value !== 'play')
+      return
     if (block.revealed)
       return
     block.flagged = !block.flagged
@@ -88,15 +92,26 @@ export class GamePlay {
   }
 
   onClick(block: BlockState) {
+    if (this.gameState.value !== 'play')
+      return
     if (!this.mineGenerated) {
       this.generateMines(this.state.value, block)
       this.mineGenerated = true
     }
     block.revealed = true
-    if (block.mine)
-      alert('BOOm')
+    if (block.mine) {
+      this.gameState.value = 'lost'
+      this.showAllMines()
+      return
+    }
     this.expandZero(block)
-    this.checkGameState()
+  }
+
+  showAllMines() {
+    this.state.value.flat().forEach((i) => {
+      if (i.mine)
+        i.revealed = true
+    })
   }
 
   checkGameState() {
@@ -104,10 +119,11 @@ export class GamePlay {
       return
     const blocks = this.state.value.flat()
     if (blocks.every(block => block.revealed || block.flagged)) {
-      if (blocks.some(block => block.flagged && !block.mine))
-        alert('You lose')
-      else
-        alert('You win')
+      if (blocks.some(block => block.flagged && !block.mine)) {
+        this.gameState.value = 'lost'
+        this.showAllMines()
+      }
+      else { this.gameState.value = 'won' }
     }
   }
 }
