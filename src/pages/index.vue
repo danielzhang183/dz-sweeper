@@ -2,7 +2,7 @@
 import { toggleDev } from '~/composables'
 
 const play = new GamePlay(10, 10)
-useStorage('dzsweeper-state', play.state)
+useStorage('dz-sweeper-state', play.state)
 const state = computed(() => play.board)
 </script>
 
