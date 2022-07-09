@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { toggleDev } from '~/composables'
 
-const play = new GamePlay(5, 5)
+const play = new GamePlay(10, 10, 10)
 useStorage('dz-sweeper-state', play.state)
 const state = computed(() => play.board)
+const mineCount = computed(() => {
+  return play.blocks.reduce((a, b) => (a + (b.mine ? 1 : 0)), 0)
+})
 
 watchEffect(() => {
   play.checkGameState()
@@ -22,6 +25,11 @@ watchEffect(() => {
         RESET
       </button>
     </div>
+
+    <div>
+      Count: {{ mineCount }}
+    </div>
+
     <div p5>
       <div
         v-for="row, y in state"
