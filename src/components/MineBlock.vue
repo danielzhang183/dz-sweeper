@@ -26,7 +26,7 @@ function getBlockClass(block: BlockState) {
   <button
     flex="~"
     items-center justify-center
-    w-10 h-10 m="0.5"
+    min-w-10 min-h-10 m="0.5"
     hover="bg-gray/10"
     border="1 gray-400/10"
     :class="getBlockClass(block)"

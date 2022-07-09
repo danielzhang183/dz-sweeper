@@ -30,12 +30,12 @@ watchEffect(() => {
       Count: {{ mineCount }}
     </div>
 
-    <div p5>
+    <div p5 w-full overflow-auto>
       <div
         v-for="row, y in state"
         :key="y"
         flex="~"
-        items-center justify-center
+        items-center justify-center w-max ma
       >
         <MineBlock
           v-for="block, x in row" :key="x"
