@@ -16,6 +16,7 @@ interface GameState {
   board: BlockState[][]
   mineGenerated: Boolean
   gameState: 'play' | 'won' | 'lost'
+  startMS: number
 }
 
 export class GamePlay {
@@ -26,7 +27,7 @@ export class GamePlay {
     public height: number,
     public mines: number,
   ) {
-    this.reset()
+    this.reset(width, height, mines)
   }
 
   get board() {
@@ -37,8 +38,16 @@ export class GamePlay {
     return this.state.value.board.flat()
   }
 
-  reset() {
+  reset(
+    width = this.width,
+    height = this.height,
+    mines = this.mines,
+  ) {
+    this.width = width
+    this.height = height
+    this.mines = mines
     this.state.value = {
+      startMS: +Date.now(),
       mineGenerated: false,
       gameState: 'play',
       board: Array.from({ length: this.height }, (_, y) =>
@@ -63,9 +72,7 @@ export class GamePlay {
       const x = this.randomInt(0, this.width - 1)
       const y = this.randomInt(0, this.height - 1)
       const block = state[x][y]
-      if (Math.abs(initial.x - block.x) <= 1)
-        return false
-      if (Math.abs(initial.y - block.y) <= 1)
+      if (Math.abs(initial.x - block.x) <= 1 && Math.abs(initial.y - block.y) <= 1)
         return false
       if (block.mine)
         return false
@@ -125,7 +132,7 @@ export class GamePlay {
   }
 
   onClick(block: BlockState) {
-    if (this.state.value.gameState !== 'play')
+    if (this.state.value.gameState !== 'play' || block.flagged)
       return
     if (!this.state.value.mineGenerated) {
       this.generateMines(this.board, block)
@@ -151,15 +158,35 @@ export class GamePlay {
     if (!this.state.value.mineGenerated)
       return
     const blocks = this.board.flat()
-    if (blocks.every(block => block.revealed || block.flagged)) {
+    if (blocks.every(block => block.revealed || block.flagged || block.mine)) {
       if (blocks.some(block => block.flagged && !block.mine)) {
         this.state.value.gameState = 'lost'
         this.showAllMines()
       }
       else {
         this.state.value.gameState = 'won'
-        alert('loss')
       }
+    }
+  }
+
+  autoExpand(block: BlockState) {
+    const siblings = this.getSiblings(block)
+    const flags = siblings.reduce((a, b) => a + (b.flagged ? 1 : 0), 0)
+    const notRevealed = siblings.reduce((a, b) => a + (!b.revealed && !b.flagged ? 1 : 0), 0)
+    if (flags === block.adjacentMines) {
+      siblings.forEach((i) => {
+        if (i.revealed || i.flagged)
+          return
+        i.revealed = true
+        this.expandZero(i)
+      })
+    }
+    const missingFlags = block.adjacentMines - flags
+    if (notRevealed === missingFlags) {
+      siblings.forEach((i) => {
+        if (!i.revealed && !i.flagged)
+          i.flagged = true
+      })
     }
   }
 }
