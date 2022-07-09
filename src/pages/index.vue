@@ -4,7 +4,7 @@ import { isDev, toggleDev } from '~/composables'
 const play = new GamePlay(10, 10, 10)
 
 const now = $(useNow())
-const timerMs = $computed(() => Math.round((+now - play.state.value.startMS) / 1000))
+const timerMs = $computed(() => Math.round(((play.state.value.endMs || +now) - play.state.value.startMS) / 1000))
 useStorage('dz-sweeper-state', play.state)
 const state = $computed(() => play.board)
 const mineRest = $computed(() => {
@@ -83,6 +83,6 @@ watchEffect(() => {
       </div>
     </div>
 
-    <Confetti :passed="play.state.value.gameState === 'won'" />
+    <Confetti :passed="play.state.value.status === 'won'" />
   </div>
 </template>

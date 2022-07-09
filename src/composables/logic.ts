@@ -11,12 +11,13 @@ const directions = [
   [-1, 1],
   [0, 1],
 ]
-
+type GameStatus = 'play' | 'won' | 'lost'
 interface GameState {
   board: BlockState[][]
   mineGenerated: Boolean
-  gameState: 'play' | 'won' | 'lost'
+  status: GameStatus
   startMS: number
+  endMs?: number
 }
 
 export class GamePlay {
@@ -49,7 +50,7 @@ export class GamePlay {
     this.state.value = {
       startMS: +Date.now(),
       mineGenerated: false,
-      gameState: 'play',
+      status: 'play',
       board: Array.from({ length: this.height }, (_, y) =>
         Array.from({ length: this.width },
           (_, x): BlockState => ({
@@ -124,7 +125,7 @@ export class GamePlay {
   }
 
   onRightClick(block: BlockState) {
-    if (this.state.value.gameState !== 'play')
+    if (this.state.value.status !== 'play')
       return
     if (block.revealed)
       return
@@ -132,7 +133,7 @@ export class GamePlay {
   }
 
   onClick(block: BlockState) {
-    if (this.state.value.gameState !== 'play' || block.flagged)
+    if (this.state.value.status !== 'play' || block.flagged)
       return
     if (!this.state.value.mineGenerated) {
       this.generateMines(this.board, block)
@@ -140,8 +141,7 @@ export class GamePlay {
     }
     block.revealed = true
     if (block.mine) {
-      this.state.value.gameState = 'lost'
-      this.showAllMines()
+      this.onGameOver('lost')
       return
     }
     this.expandZero(block)
@@ -159,13 +159,10 @@ export class GamePlay {
       return
     const blocks = this.board.flat()
     if (blocks.every(block => block.revealed || block.flagged || block.mine)) {
-      if (blocks.some(block => block.flagged && !block.mine)) {
-        this.state.value.gameState = 'lost'
-        this.showAllMines()
-      }
-      else {
-        this.state.value.gameState = 'won'
-      }
+      if (blocks.some(block => block.flagged && !block.mine))
+        this.onGameOver('lost')
+      else
+        this.onGameOver('won')
     }
   }
 
@@ -179,6 +176,8 @@ export class GamePlay {
           return
         i.revealed = true
         this.expandZero(i)
+        if (i.mine)
+          this.onGameOver('lost')
       })
     }
     const missingFlags = block.adjacentMines - flags
@@ -188,5 +187,12 @@ export class GamePlay {
           i.flagged = true
       })
     }
+  }
+
+  onGameOver(status: GameStatus) {
+    this.state.value.status = status
+    this.state.value.endMs = +Date.now()
+    if (status === 'lost')
+      this.showAllMines()
   }
 }
