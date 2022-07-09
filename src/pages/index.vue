@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { toggleDev } from '~/composables'
 
-const play = new GamePlay(10, 10)
+const play = new GamePlay(5, 5)
 useStorage('dz-sweeper-state', play.state)
 const state = computed(() => play.board)
+
+watchEffect(() => {
+  play.checkGameState()
+})
 </script>
 
 <template>

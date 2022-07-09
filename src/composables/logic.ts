@@ -99,7 +99,6 @@ export class GamePlay {
     if (block.revealed)
       return
     block.flagged = !block.flagged
-    this.checkGameState()
   }
 
   onClick(block: BlockState) {
@@ -133,8 +132,12 @@ export class GamePlay {
       if (blocks.some(block => block.flagged && !block.mine)) {
         this.state.value.gameState = 'lost'
         this.showAllMines()
+        alert('Win')
       }
-      else { this.state.value.gameState = 'won' }
+      else {
+        this.state.value.gameState = 'won'
+        alert('loss')
+      }
     }
   }
 }
